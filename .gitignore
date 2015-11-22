@@ -13,3 +13,4 @@ pom.xml.asc
 /resources/public/css/compiled
 /resources/public/js/compiled
 *.log
+/profiles.clj

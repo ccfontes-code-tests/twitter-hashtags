@@ -9,6 +9,15 @@ Will compile ClojureScript and Garden files for production.
 
     lein dist
 
+## Environment variables
+You need to set these first:
+
+    TWITTER_HANDLE
+    OAUTH_APP_KEY
+    OAUTH_APP_SECRET
+    OAUTH_CONSUMER_KEY
+    OAUTH_CONSUMER_SECRET
+
 ## Usage
 
     lein run

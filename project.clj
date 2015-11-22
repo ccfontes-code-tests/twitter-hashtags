@@ -94,16 +94,19 @@
                  [com.taoensso/timbre "4.1.4"]
                  [environ "1.0.1"]]
 
-  :plugins [[lein-cljsbuild "1.1.1"]
+  :plugins [[lein-environ "1.0.1"]
+            [lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-1"]
             [lein-garden "0.2.6"]]
 
-  :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]
-                                  [midje "1.8.2"]
-                                  [garden "1.3.0-SNAPSHOT"]
-                                  [ring/ring-mock "0.3.0"]
-                                  [cheshire "5.5.0"]]
-                   :source-paths ["dev"]}}
+  :profiles {:dev [:project/dev :profiles/dev]
+             :project/dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]
+                                          [midje "1.8.2"]
+                                          [garden "1.3.0-SNAPSHOT"]
+                                          [ring/ring-mock "0.3.0"]
+                                          [cheshire "5.5.0"]]
+                           :source-paths ["dev"]}
+             :profiles/dev {}} ; Only change this in ./profiles.clj
 
   :repl-options
       {:init (do (require '[twitter-hashtags.core :as core]) (core/-main)
