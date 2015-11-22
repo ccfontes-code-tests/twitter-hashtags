@@ -1,11 +1,11 @@
 (ns twitter-hashtags.core
   (:require [twitter-hashtags.routes :refer [routes]]
-  	        [twitter-hashtags.db :refer [def-app-db]]
-  	        [ring.adapter.jetty :refer [run-jetty]]
-  	        [ring.middleware.json :refer [wrap-json-response]]
-  	        [ring.middleware.params :refer [wrap-params]]
-  	        [environ.core :refer [env]]
-  	        [taoensso.timbre :refer [info]]))
+            [twitter-hashtags.db :refer [def-app-db]]
+            [ring.adapter.jetty :refer [run-jetty]]
+            [ring.middleware.json :refer [wrap-json-response]]
+            [ring.middleware.params :refer [wrap-params]]
+            [environ.core :refer [env]]
+            [taoensso.timbre :refer [info]]))
 
 (defonce system (atom nil))
 

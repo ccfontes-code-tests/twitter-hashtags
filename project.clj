@@ -81,9 +81,9 @@
                  [org.clojure/clojurescript "1.7.170"]
                  [org.clojure/core.async "0.2.374"]
                  [hiccup "1.0.5"]
-                 [sablono "0.3.6"]
+                 [sablono "0.4.0"]
                  [org.omcljs/om "0.9.0"]
-                 [prismatic/om-tools "0.3.12"]
+                 [prismatic/om-tools "0.4.0"]
                  ; in compojure exclusion: midje needs more recent commons-codec
                  [compojure "1.4.0" :exclusions [commons-codec]]
                  [ring/ring-jetty-adapter "1.4.0"]
@@ -99,7 +99,7 @@
             [lein-garden "0.2.6"]]
 
   :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.11"]
-                                  [midje "1.8.1"]
+                                  [midje "1.8.2"]
                                   [garden "1.3.0-SNAPSHOT"]
                                   [ring/ring-mock "0.3.0"]
                                   [cheshire "5.5.0"]]
