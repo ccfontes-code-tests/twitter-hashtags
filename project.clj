@@ -75,7 +75,7 @@
                      :stylesheet styles/styles
                      :compiler {:output-to "resources/public/css/compiled/styles.css"}}]}
 
-  :aliases {"dist" ["do" ["garden" "once"] ["cljsbuild" "once" "min"]]}
+  :aliases {"dist" ["do" ["garden" "once"] ["cljsbuild" "once"]]}
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
