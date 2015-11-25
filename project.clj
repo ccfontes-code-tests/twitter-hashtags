@@ -92,7 +92,9 @@
                  [ring/ring-json "0.4.0"]
                  [org.xerial/sqlite-jdbc "3.8.11.2"]
                  [com.taoensso/timbre "4.1.4"]
-                 [environ "1.0.1"]]
+                 [environ "1.0.1"]
+                 [net._01001111/jlorem "1.3"]
+                 [com.twitter/twitter-text "1.6.1"]]
 
   :plugins [[lein-environ "1.0.1"]
             [lein-cljsbuild "1.1.1"]
@@ -104,7 +106,7 @@
                                           [midje "1.8.2"]
                                           [garden "1.3.0-SNAPSHOT"]
                                           [ring/ring-mock "0.3.0"]
-                                          [cheshire "5.5.0"]]
+                                          [org.clojure/data.json "0.2.5"]]
                            :source-paths ["dev"]}
              :profiles/dev {}} ; Only change this in ./profiles.clj
 
@@ -112,5 +114,6 @@
       {:init (do (require '[twitter-hashtags.core :as core]) (core/-main)
                  (use 'midje.repl) (autotest))
        :init-ns user
+       :timeout 400000
        :welcome
          (println "Type (reset) to reload all namespaces and reinstate the system wide resources.")})
