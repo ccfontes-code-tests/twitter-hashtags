@@ -62,13 +62,15 @@
 
 (def ^:dynamic *user-stream-callbacks*
     (AsyncStreamingCallback.
-      (comp println
-            decorate-report
-            update-report
-            frequencies
+      #(let [stream-input (str %2)]
+        (if (tweet? stream-input)
+          (-> stream-input
+            tweet-response->tweet-text
             tweet->hashtags
-            #(if (tweet? %) (tweet-response->tweet-text %))
-            #(str %2))
+            frequencies
+            update-report
+            decorate-report
+            println)))
       println
       println))
 
