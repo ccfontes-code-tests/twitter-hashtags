@@ -17,6 +17,13 @@ You need to set these first:
 
     lein run
 
+## Generate random statuses updates in user timeline
+
+Type `lein run`, then:
+
+    (in-ns 'twitter-hashtags.core)
+    (gen-status-update 20) ; generates 20 statuses, or 10 if input is not provided
+
 ## Run tests
 
     lein repl
