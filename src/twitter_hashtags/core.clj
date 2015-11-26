@@ -6,7 +6,7 @@
             [clj-time.local :refer [local-now format-local-time]]
             [environ.core :refer [env]]
             [clojure.string :as str]
-            [taoensso.timbre :refer [info]]
+            [taoensso.timbre :refer [info fatal]]
             [twitter.oauth :refer [make-oauth-creds]]
             [twitter-hashtags.text
               :refer [big-lorem-tweet hashtagify-tweet tweet->hashtags]])
@@ -71,13 +71,16 @@
       println))
 
 (defn -main []
-  (println)
-  (info "Bootstrapping report..")
-  (info "Report bootstrapped.\n")
-  (-> (bootstrap-report) decorate-report println)
-  (info "Starting to report hashtag usage of user timeline..\n")
-  (user-stream :oauth-creds my-twitter-creds
-               :callbacks *user-stream-callbacks*)
-  (loop []
-    (Thread/sleep 60000)
-    (recur)))
+  (try
+    (println)
+    (info "Bootstrapping report..")
+    (-> (bootstrap-report) decorate-report println)
+    (info "Report bootstrapped.\n")
+    (info "Starting to report hashtag usage of user timeline..\n")
+    (user-stream :oauth-creds my-twitter-creds
+                 :callbacks *user-stream-callbacks*)
+    (loop []
+      (Thread/sleep 60000)
+      (recur))
+  (catch Exception e
+      (fatal (.getMessage e)))))
