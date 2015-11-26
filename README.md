@@ -20,12 +20,19 @@ You need to set these first:
 
 Type `lein run`, then:
 
-    (in-ns 'twitter-hashtags.core)
-    (gen-status-update 20) ; generates 20 statuses, or 10 if input is not provided
+```clojure
+(in-ns 'twitter-hashtags.core)
+(gen-status-update 20) ; generates 20 statuses, or 10 if input is not provided
+```
 
 ## Run the tests
 
     lein repl
+
+## TODO
+
+- resume streaming on failure
+- support getting all the user's timeline tweet history (just getting 200 now)
 
 ## Development
 
