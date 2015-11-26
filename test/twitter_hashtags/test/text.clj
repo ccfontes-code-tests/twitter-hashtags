@@ -8,16 +8,21 @@
   (-> (repeat 140 "x") str/join valid-tweet-size?) => true
   (-> (repeat 141 "x") str/join valid-tweet-size?) => false)
 
-(facts
+(facts "about 'rand-idx'"
   (let [coll [3 8 1]]
     (rand-idx coll) => integer?
     (rand-idx coll) => #(<= 0 % (- (count coll) 1))))
 
-(facts
+(facts "about 'amount-hashtags'"
   (amount-hashtags) => #(<= 0 % max-hashtags))
 
-(facts
+(facts "about 'hashtagify-word'"
   (hashtagify-word "sermo") => "#sermo")
+
+(fact "about 'tweet->hashtags'"
+  (tweet->hashtags lorem-ipsum-tweet) => ["egestas" "eros" "est"]
+  (tweet->hashtags nil)               => nil
+  (tweet->hashtags "")                => nil)
 
 (facts "about 'big-lorem-tweet'"
   (big-lorem-tweet)          => string?
@@ -26,8 +31,3 @@
 (facts "about 'hashtagify-tweet'"
   (hashtagify-tweet (big-lorem-tweet)) => string?
   (hashtagify-tweet (big-lorem-tweet)) => valid-tweet-size?)
-
-(fact
-  (tweet->hashtags lorem-ipsum-tweet) => ["egestas" "eros" "est"]
-  (tweet->hashtags nil)               => nil
-  (tweet->hashtags "")                => nil)
