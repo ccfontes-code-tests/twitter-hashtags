@@ -1,4 +1,6 @@
 (ns twitter-hashtags.core
+  "Functions for generation of user timeline status updates and
+  user timeline hashtags usage report."
   (:use twitter.api.restful twitter.api.streaming)
   (:require twitter.callbacks.protocols
             [clj-time.local :refer [local-now format-local-time]]
@@ -28,9 +30,6 @@
     (or amount 10)
     (fn [] (rand-status-update)
            (Thread/sleep 1000))))
-
-(defn hashtag-frequencies [twitter-account]
-  {:body {:frequencies ""}})
 
 (defn tweet-response->tweet-text
   "Extracts the tweet text from the tweet response of the streaming API.

@@ -1,4 +1,5 @@
 (ns twitter-hashtags.text
+  "Functions for random tweet generation and tweet text manipulation."
   (:require [clojure.string :as str])
   (:import [com.twitter Extractor]
   	       [net._01001111.text LoremIpsum]))
