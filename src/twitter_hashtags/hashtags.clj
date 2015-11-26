@@ -5,7 +5,6 @@
   	        [environ.core :refer [env]]
             [clojure.string :as str]
             [clojure.data.json :refer [read-json]]
-            [taoensso.timbre :refer [info]]
   	        [twitter.oauth :refer [make-oauth-creds]]
   	        [twitter.api.streaming :refer :all]
   	        [twitter-hashtags.text
@@ -64,13 +63,8 @@
     (AsyncStreamingCallback.
       #(let [stream-input (str %2)]
         (if (tweet? stream-input)
-          (-> stream-input
-            tweet-response->tweet-text
-            tweet->hashtags
-            frequencies
-            update-report
-            decorate-report
-            println)))
+          (if-let [hashtags (-> stream-input tweet-response->tweet-text tweet->hashtags)]
+             (-> hashtags frequencies update-report decorate-report println))))
       println
       println))
 
