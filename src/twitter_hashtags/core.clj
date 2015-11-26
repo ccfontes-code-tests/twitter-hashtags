@@ -1,22 +1,84 @@
 (ns twitter-hashtags.core
-  (:require [twitter-hashtags.routes :refer [routes]]
-            [twitter-hashtags.db :refer [def-app-db]]
-            [ring.adapter.jetty :refer [run-jetty]]
-            [ring.middleware.json :refer [wrap-json-response]]
-            [ring.middleware.params :refer [wrap-params]]
+  (:use twitter.api.restful twitter.api.streaming)
+  (:require twitter.callbacks.protocols
+            [clj-time.local :refer [local-now format-local-time]]
             [environ.core :refer [env]]
-            [taoensso.timbre :refer [info]]))
+            [clojure.string :as str]
+            [taoensso.timbre :refer [info]]
+            [twitter.oauth :refer [make-oauth-creds]]
+            [twitter-hashtags.text
+              :refer [big-lorem-tweet hashtagify-tweet tweet->hashtags]])
+  (:import (twitter.callbacks.protocols AsyncStreamingCallback)))
 
-(defonce system (atom nil))
+(def my-twitter-creds (make-oauth-creds (env :oauth-consumer-key)
+                                        (env :oauth-consumer-secret)
+                                        (env :oauth-app-key)
+                                        (env :oauth-app-secret)))
 
-(def app-handler (-> routes wrap-json-response wrap-params))
+(def report (atom {}))
 
-(defn start-web-server [port]
-  (let [port (or port (env :port) 3000)]
-  	(info "App server started on port" port)
-    (run-jetty app-handler {:port port :join? false})))
+(defn rand-status-update []
+  (statuses-update :oauth-creds my-twitter-creds
+                   :params {:status (hashtagify-tweet (big-lorem-tweet))}))
 
-(defn -main [& [port]]
-  (info "Allocating system wide resources..")
-  (reset! system
-          {:db (def-app-db), :web-server (start-web-server port)}))
+(defn gen-status-update
+  "Generates a bulk 'amount' or 10 status updates with an interval of 1 second."
+  [& [amount]]
+  (repeatedly
+    (or amount 10)
+    (fn [] (rand-status-update)
+           (Thread/sleep 1000))))
+
+(defn hashtag-frequencies [twitter-account]
+  {:body {:frequencies ""}})
+
+(defn tweet-response->tweet-text
+  "Extracts the tweet text from the tweet response of the streaming API.
+  The twitter streaming API streams too much garbage which can't be parsed by
+  JSON libs. We just need the tweet text, so using regex instead."
+  [tweet-response]
+  (-> (re-find (re-pattern "\"text\":\"(.*)\"[,}]")
+               tweet-response)
+    second))
+
+(defn tweet? [s]
+  (boolean
+    (re-find (re-pattern "\"text\":\"") s)))
+
+(defn decorate-report [report]
+  (str (format-local-time (local-now) :date-hour-minute-second)
+       " - User timeline hashtag usage:\n"
+       report
+       "\n"))
+
+(defn update-report [hashtags]
+   (swap! report #(merge-with + % (frequencies hashtags))))
+
+(defn bootstrap-report []
+  (let [statuses (->> (statuses-user-timeline :oauth-creds my-twitter-creds
+                                              :params {:count 200})
+                   :body)]
+    (doseq [status statuses]
+      (-> status :text tweet->hashtags update-report))
+    @report))
+
+(def ^:dynamic *user-stream-callbacks*
+    (AsyncStreamingCallback.
+      #(let [input (str %2)]
+        (if (tweet? input)
+          (if-let [hashtags (-> input tweet-response->tweet-text tweet->hashtags)]
+             (-> hashtags update-report decorate-report println))))
+      println
+      println))
+
+(defn -main []
+  (println)
+  (info "Bootstrapping report..")
+  (info "Report bootstrapped.\n")
+  (-> (bootstrap-report) decorate-report println)
+  (info "Starting to report hashtag usage of user timeline..\n")
+  (user-stream :oauth-creds my-twitter-creds
+               :callbacks *user-stream-callbacks*)
+  (loop []
+    (Thread/sleep 60000)
+    (recur)))

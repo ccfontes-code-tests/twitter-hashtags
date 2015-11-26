@@ -1,8 +1,8 @@
-(ns twitter-hashtags.test.hashtags
+(ns twitter-hashtags.test.core
   (:use midje.sweet
   	    twitter.api.streaming
   	    twitter.api.restful
-  	    twitter-hashtags.hashtags)
+  	    twitter-hashtags.core)
   (:require [twitter.oauth :refer [make-oauth-creds]]
   	        [twitter-hashtags.text :refer [big-lorem-tweet hashtagify-tweet]]
   	        [twitter-hashtags.test.fixtures :refer [response-tweet response-friends]]))
@@ -19,8 +19,3 @@
 (facts "about 'tweet?'"
   (tweet? response-tweet) => true
   (tweet? response-friends) => false)
-
-;
-;(against-background [(before :facts (connect!))]
-;  (facts "about twitter user event"
-;    ))
