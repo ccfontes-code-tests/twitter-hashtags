@@ -36,15 +36,19 @@
 (defn tweet-response->tweet-text
   "Extracts the tweet text from the tweet response of the streaming API.
   The twitter streaming API streams too much garbage which can't be parsed by
-  JSON libs. We just need the tweet text, so using splits and regexps instead."
+  JSON libs. We just need the tweet text, so using regex instead."
   [tweet-response]
-  (-> (str/replace tweet-response (re-pattern "^\\{|}$") "")
-    (str/split (re-pattern ","))
-    (->> (map #(str/split % #":" 2))
-      (filter #(= (count %) 2))
-      (into {}))
-    (get "\"text\"")
-    (str/replace (re-pattern "^\"|\"$") "")))
+  (-> (re-find (re-pattern "\"text\":\"(.*)\"[,}]")
+               tweet-response)
+    second))
+
+  ;(-> (str/replace tweet-response (re-pattern "^\\{|}$") "")
+  ;  (str/split (re-pattern ","))
+  ;  (->> (map #(str/split % #":" 2))
+  ;    (filter #(= (count %) 2))
+  ;    (into {}))
+  ;  (get "\"text\"")
+  ;  (str/replace (re-pattern "^\"|\"$") ""))
 
 (defn tweet? [s]
   (boolean
@@ -61,9 +65,9 @@
 
 (def ^:dynamic *user-stream-callbacks*
     (AsyncStreamingCallback.
-      #(let [stream-input (str %2)]
-        (if (tweet? stream-input)
-          (if-let [hashtags (-> stream-input tweet-response->tweet-text tweet->hashtags)]
+      #(let [input (str %2)]
+        (if (tweet? input)
+          (if-let [hashtags (-> input tweet-response->tweet-text tweet->hashtags)]
              (-> hashtags frequencies update-report decorate-report println))))
       println
       println))
