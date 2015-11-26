@@ -1,18 +1,23 @@
 (ns twitter-hashtags.hashtags 
   (:use twitter.api.restful)
   (:require twitter.callbacks.protocols
+            [clj-time.local :refer [local-now format-local-time]]
   	        [environ.core :refer [env]]
-  	        [clojure.data.json :refer [read-json]]
-  	        ;[twitter.callbacks.handlers :refer [response-return-everything]]
+            [clojure.string :as str]
+            [clojure.data.json :refer [read-json]]
+            [taoensso.timbre :refer [info]]
   	        [twitter.oauth :refer [make-oauth-creds]]
   	        [twitter.api.streaming :refer :all]
-  	        [twitter-hashtags.text :refer [big-lorem-tweet hashtagify-tweet]])
+  	        [twitter-hashtags.text
+              :refer [big-lorem-tweet hashtagify-tweet tweet->hashtags]])
   (:import (twitter.callbacks.protocols AsyncStreamingCallback)))
 
 (def my-twitter-creds (make-oauth-creds (env :oauth-consumer-key)
                                         (env :oauth-consumer-secret)
                                         (env :oauth-app-key)
                                         (env :oauth-app-secret)))
+
+(def report (atom {}))
 
 (defn rand-status-update []
   (statuses-update :oauth-creds my-twitter-creds
@@ -29,17 +34,47 @@
 (defn hashtag-frequencies [twitter-account]
   {:body {:frequencies ""}})
 
-(defn tweet->hashtags [tweet]
-  )
+(defn tweet-response->tweet-text
+  "Extracts the tweet text from the tweet response of the streaming API.
+  The twitter streaming API streams too much garbage which can't be parsed by
+  JSON libs. We just need the tweet text, so using splits and regexps instead."
+  [tweet-response]
+  (-> (str/replace tweet-response (re-pattern "^\\{|}$") "")
+    (str/split (re-pattern ","))
+    (->> (map #(str/split % #":" 2))
+      (filter #(= (count %) 2))
+      (into {}))
+    (get "\"text\"")
+    (str/replace (re-pattern "^\"|\"$") "")))
+
+(defn tweet? [s]
+  (boolean
+    (re-find (re-pattern "\"text\":\"") s)))
+
+(defn decorate-report [report]
+  (str
+    (format-local-time (local-now) :date-hour-minute-second)
+    " - Hashtag usage: "
+    report))
+
+(defn update-report [new-usage]
+  (swap! report #(merge-with + % new-usage)))
 
 (def ^:dynamic *user-stream-callbacks*
-  (AsyncStreamingCallback. (comp println #(:text %) read-json #(str %2))
-  	                       println
-  	                       println))
+    (AsyncStreamingCallback.
+      (comp println
+            decorate-report
+            update-report
+            frequencies
+            tweet->hashtags
+            #(if (tweet? %) (tweet-response->tweet-text %))
+            #(str %2))
+      println
+      println))
 
-(defn report-user-hashtag-usage [& {:keys [oauth-creds]}]
+(defn report-user-hashtag-usage []
   (user-stream :oauth-creds my-twitter-creds
   	           :callbacks *user-stream-callbacks*)
   (loop []
-    (Thread/sleep 2000)
+    (Thread/sleep 60000)
     (recur)))

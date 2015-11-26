@@ -21,6 +21,11 @@
     word
     (str "#" word)))
 
+(defn tweet->hashtags
+  "Extracts hashtags from tweet."
+  [tweet]
+  (seq (.extractHashtags (Extractor.) tweet)))
+
 (defn big-lorem-tweet []
   "Creates a random lorem ipsum twitter sized message."
   (reduce (fn [lorem ipsum]

@@ -1,6 +1,7 @@
 (ns twitter-hashtags.test.text
-  (:require [midje.sweet :refer [facts]]
+  (:require [midje.sweet :refer [fact facts]]
             [twitter-hashtags.text :refer :all]
+            [twitter-hashtags.test.fixtures :refer [lorem-ipsum-tweet]]
             [clojure.string :as str]))
 
 (facts "about 'valid-tweet-size?'"
@@ -25,3 +26,8 @@
 (facts "about 'hashtagify-tweet'"
   (hashtagify-tweet (big-lorem-tweet)) => string?
   (hashtagify-tweet (big-lorem-tweet)) => valid-tweet-size?)
+
+(fact
+  (tweet->hashtags lorem-ipsum-tweet) => ["egestas" "eros" "est"]
+  (tweet->hashtags nil)               => nil
+  (tweet->hashtags "")                => nil)

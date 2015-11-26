@@ -94,8 +94,10 @@
                  [com.taoensso/timbre "4.1.4"]
                  [environ "1.0.1"]
                  [net._01001111/jlorem "1.3"]
-                 [com.twitter/twitter-text "1.6.1"]]
-
+                 [com.twitter/twitter-text "1.6.1"]
+                 [prismatic/plumbing "0.5.2"]
+                 [clj-time "0.11.0"]]
+ 
   :plugins [[lein-environ "1.0.1"]
             [lein-cljsbuild "1.1.1"]
             [lein-figwheel "0.5.0-1"]
