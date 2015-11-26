@@ -1,12 +1,11 @@
 (ns twitter-hashtags.hashtags 
-  (:use twitter.api.restful)
+  (:use twitter.api.restful twitter.api.streaming)
   (:require twitter.callbacks.protocols
             [clj-time.local :refer [local-now format-local-time]]
   	        [environ.core :refer [env]]
             [clojure.string :as str]
-            [clojure.data.json :refer [read-json]]
+            [taoensso.timbre :refer [info]]
   	        [twitter.oauth :refer [make-oauth-creds]]
-  	        [twitter.api.streaming :refer :all]
   	        [twitter-hashtags.text
               :refer [big-lorem-tweet hashtagify-tweet tweet->hashtags]])
   (:import (twitter.callbacks.protocols AsyncStreamingCallback)))
@@ -55,26 +54,38 @@
     (re-find (re-pattern "\"text\":\"") s)))
 
 (defn decorate-report [report]
-  (str
-    (format-local-time (local-now) :date-hour-minute-second)
-    " - Hashtag usage: "
-    report))
+  (str "\n"
+       (format-local-time (local-now) :date-hour-minute-second)
+       " - User timeline hashtag usage:\n"
+       report))
 
-(defn update-report [new-usage]
-  (swap! report #(merge-with + % new-usage)))
+(defn update-report [hashtags]
+   (swap! report #(merge-with + % (frequencies hashtags))))
+
+(defn bootstrap-report []
+  (let [statuses (->> (statuses-user-timeline :oauth-creds my-twitter-creds
+                                              :params {:count 200})
+                   :body)]
+    (doseq [status statuses]
+      (-> status :text tweet->hashtags update-report))
+    @report))
 
 (def ^:dynamic *user-stream-callbacks*
     (AsyncStreamingCallback.
       #(let [input (str %2)]
         (if (tweet? input)
           (if-let [hashtags (-> input tweet-response->tweet-text tweet->hashtags)]
-             (-> hashtags frequencies update-report decorate-report println))))
+             (-> hashtags update-report decorate-report println))))
       println
       println))
 
 (defn report-user-hashtag-usage []
+  (info "Bootstrapping report..")
+  (info "Report bootstrapped.")
+  (-> (bootstrap-report) decorate-report println)
+  (info "Starting to report hashtag usage of user timeline..")
   (user-stream :oauth-creds my-twitter-creds
-  	           :callbacks *user-stream-callbacks*)
+               :callbacks *user-stream-callbacks*)
   (loop []
     (Thread/sleep 60000)
     (recur)))
