@@ -3,7 +3,7 @@ Frequency of hashtag usages on a twitter account.
 
 ## Requirements
 
-- Leiningen 2.5.3 or higher
+- Leiningen 2.4.0 or higher
 
 ## Environment variables
 You need to set the environment variables below: 
