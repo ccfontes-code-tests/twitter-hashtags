@@ -1,16 +1,19 @@
 # twitter-hashtags
+Frequency of hashtag usages on a twitter account.
 
 ## Requirements
 
 - Leiningen 2.5.3 or higher
 
 ## Environment variables
-You need to set these first:
+You need to set the environment variables below: 
 
     OAUTH_APP_KEY
     OAUTH_APP_SECRET
     OAUTH_CONSUMER_KEY
     OAUTH_CONSUMER_SECRET
+
+using the keys and secrets of your app at [apps.twitter.com](https://apps.twitter.com).
 
 ## Run the report
 
@@ -35,9 +38,9 @@ Type `lein run`, then:
 - support getting all the user's timeline tweet history (just getting 200 now)
 
 ## Development
-
-### Development
-The command below will open a repl and continuously run the tests.
-Type (reset) to reload all namespaces.
+The command below will open a repl and continuously run the tests everytime
+a source or test file is saved.
 
     lein repl
+
+Type (reset) to reload all namespaces.
