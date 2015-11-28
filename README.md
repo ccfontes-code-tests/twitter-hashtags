@@ -43,4 +43,4 @@ a source or test file is saved.
 
     lein repl
 
-Type (reset) to reload all namespaces.
+Type (refresh) to reload all namespaces.
