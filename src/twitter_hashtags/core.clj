@@ -2,14 +2,15 @@
   "Functions for generation of user timeline status updates and
   user timeline hashtags usage report."
   (:use twitter.api.restful twitter.api.streaming)
-  (:require twitter.callbacks.protocols
-            [clj-time.local :refer [local-now format-local-time]]
-            [environ.core :refer [env]]
-            [clojure.string :as str]
-            [taoensso.timbre :as timbre :refer [info error fatal]]
-            [twitter.oauth :refer [make-oauth-creds]]
-            [twitter-hashtags.text
-              :refer [big-lorem-tweet hashtagify-tweet tweet->hashtags]])
+  (:require
+    twitter.callbacks.protocols
+    [clj-time.local :refer [local-now format-local-time]]
+    [environ.core :refer [env]]
+    [clojure.string :as str]
+    [taoensso.timbre :as timbre :refer [info error fatal]]
+    [twitter.oauth :refer [make-oauth-creds]]
+    [twitter-hashtags.logging :refer [config-timbre!]]
+    [twitter-hashtags.text :refer [big-lorem-tweet hashtagify-tweet tweet->hashtags]])
   (:import (twitter.callbacks.protocols AsyncStreamingCallback)))
 
 (def my-twitter-creds (make-oauth-creds (env :oauth-consumer-key)
@@ -72,6 +73,7 @@
 
 (defn -main []
   (try
+    (config-timbre!)
     (println)
     (info "Bootstrapping report..")
     (-> (bootstrap-report) decorate-report println)
