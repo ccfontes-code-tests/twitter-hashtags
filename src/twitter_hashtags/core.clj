@@ -24,7 +24,7 @@
   (statuses-update :oauth-creds my-twitter-creds
                    :params {:status (hashtagify-tweet (big-lorem-tweet))}))
 
-(defn gen-status-update
+(defn rand-status-updates
   "Generates a bulk 'amount' or 10 status updates with an interval of 1 second."
   [& [amount]]
   (repeatedly
