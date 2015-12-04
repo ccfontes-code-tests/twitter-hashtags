@@ -35,7 +35,7 @@ Type `lein run`, then:
 ## TODO
 
 - resume streaming on failure
-- support getting all the user's timeline tweet history (just getting 200 now)
+- support getting new tweets in real-time while bootstrapping the report
 
 ## Development
 The command below will open a repl and continuously run the tests everytime

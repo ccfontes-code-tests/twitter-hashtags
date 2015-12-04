@@ -34,12 +34,13 @@
 
 (defn tweet-response->tweet-text
   "Extracts the tweet text from the tweet response of the streaming API.
-  The twitter streaming API streams too much garbage which can't be parsed by
-  JSON libs. We just need the tweet text, so using regex instead."
+  The twitter streaming API streams unknown chars besides '\r\n' to keep the
+  connection alive, which can't be parsed by JSON libs. We just need the tweet
+  text, so using regex instead."
   [tweet-response]
-  (-> (re-find (re-pattern "\"text\":\"(.*)\"[,}]")
-               tweet-response)
-    second))
+  (second
+    (re-find (re-pattern "\"text\":\"(.*)\"[,}]")
+             tweet-response)))
 
 (defn tweet? [s]
   (boolean
@@ -54,13 +55,30 @@
 (defn update-report [hashtags]
    (swap! report #(merge-with + % (frequencies hashtags))))
 
-(defn bootstrap-report []
-  (let [statuses (->> (statuses-user-timeline :oauth-creds my-twitter-creds
-                                              :params {:count 200})
-                   :body)]
-    (doseq [status statuses]
-      (-> status :text tweet->hashtags update-report))
-    @report))
+(defn page-bootstrap-report
+  "Bootstrap the report for hashtag usages from a page of the user timeline."
+  [statuses]
+  (reduce
+    (fn [streamed-tweet-hashes status]
+      (let [tweet (:text status)
+            tweet-hash (hash tweet)]
+        (when-not (streamed-tweet-hashes tweet-hash)
+          (-> tweet tweet->hashtags update-report)
+          (conj streamed-tweet-hashes tweet-hash))))
+    #{}
+    statuses))
+
+(defn bootstrap-report
+  "Bootstrap the report for hashtag usages from the user timeline."
+  []
+  (try
+    (loop [page 0]
+      (let [statuses (:body (statuses-user-timeline :oauth-creds my-twitter-creds
+                                                    :params {:count 200 :page page}))]
+        (page-bootstrap-report statuses)
+        (recur (inc page))))
+    (catch Exception _)) ; FIXME known how many pages beforehand
+  @report)
 
 (def ^:dynamic *user-stream-callbacks*
     (AsyncStreamingCallback.
@@ -78,7 +96,7 @@
     (info "Bootstrapping report..")
     (-> (bootstrap-report) decorate-report println)
     (info "Report bootstrapped.\n")
-    (info "Starting to report hashtag usage of user timeline in real time..\n")
+    (info "Starting to report hashtag usage updates from user timeline in real time..\n")
     (user-stream :oauth-creds my-twitter-creds
                  :callbacks *user-stream-callbacks*)
     (loop []
