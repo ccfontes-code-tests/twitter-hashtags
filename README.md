@@ -8,6 +8,7 @@ Frequency of hashtag usages on a twitter account.
 ## Environment variables
 You need to set the environment variables below: 
 
+    TWITTER_HANDLE
     OAUTH_APP_KEY
     OAUTH_APP_SECRET
     OAUTH_CONSUMER_KEY

@@ -31,4 +31,5 @@
   :repl-options
       {:init (do (use 'midje.repl) (autotest))
        :init-ns user
+       :timeout 50000
        :welcome (println "Type (refresh) to reload all namespaces.")})

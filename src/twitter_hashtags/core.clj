@@ -55,6 +55,19 @@
 (defn update-report [hashtags]
    (swap! report #(merge-with + % (frequencies hashtags))))
 
+(defn user-tl-tweet-count
+  "Gets the number of tweets in the user timeline."
+  []
+  (let [user-info (users-show :params {:screen_name (env :twitter-handle)}
+                              :oauth-creds my-twitter-creds)]
+    (-> user-info :body :statuses_count)))
+
+(def tweets-by-page 200)
+
+(defn max-user-tl-tweet-pages
+  "Gets the maximum number of ':page's to later get all user timeline tweets."
+  [] (-> (user-tl-tweet-count) (/ tweets-by-page) Math/ceil int))
+
 (defn page-bootstrap-report
   "Bootstrap the report for hashtag usages from a page of the user timeline."
   [statuses]
@@ -71,13 +84,15 @@
 (defn bootstrap-report
   "Bootstrap the report for hashtag usages from the user timeline."
   []
-  (try
-    (loop [page 0]
-      (let [statuses (:body (statuses-user-timeline :oauth-creds my-twitter-creds
-                                                    :params {:count 200 :page page}))]
-        (page-bootstrap-report statuses)
-        (recur (inc page))))
-    (catch Exception _)) ; FIXME known how many pages beforehand
+  (dotimes [page (max-user-tl-tweet-pages)]
+    (let [rest-tweets-cnt (- (user-tl-tweet-count) (* page tweets-by-page))
+          tweets-to-get-cnt (if (< rest-tweets-cnt tweets-by-page)
+                              rest-tweets-cnt
+                              tweets-by-page)
+          statuses (:body (statuses-user-timeline :oauth-creds my-twitter-creds
+                                                  :params {:count tweets-to-get-cnt
+                                                           :page page}))]
+      (page-bootstrap-report statuses)))
   @report)
 
 (def ^:dynamic *user-stream-callbacks*
