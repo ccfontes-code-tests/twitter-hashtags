@@ -19,7 +19,12 @@
   (max-user-tl-tweet-pages) => pos-int?)
 
 (fact "about 'update-report'"
-  (let [report-backup @report]
-    (reset! report {})
-    (update-report ["sermo" "sermo" "gravida"]) => (contains {"sermo" 2 "gravida" 1})
-    (reset! report report-backup)))
+  (let [report {"sermo" 1 "netus" 2}
+        hashtags ["sermo" "sermo" "gravida"]]
+    (update-report report hashtags) => (contains {"sermo" 3 "gravida" 1})))
+
+(fact "about 'tweets-count-for-page'"
+  (tweets-count-for-page 0) => (every-pred pos-int? #(<= % tweets-by-page)))
+
+(fact "about 'user-tl-page-hashtags'"
+  (user-tl-page-hashtags 0) => (every-pred seq (comp string? first)))

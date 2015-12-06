@@ -12,6 +12,7 @@
   :source-paths ["src"]
 
   :dependencies [[org.clojure/clojure "1.7.0"]
+                 [org.clojure/core.async "0.2.374"]
                  [twitter-api "0.7.8"]
                  [com.taoensso/timbre "4.1.4"]
                  [environ "1.0.1"]
@@ -31,5 +32,5 @@
   :repl-options
       {:init (do (use 'midje.repl) (autotest))
        :init-ns user
-       :timeout 50000
+       :timeout 100000
        :welcome (println "Type (refresh) to reload all namespaces.")})
