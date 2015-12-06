@@ -36,7 +36,8 @@ Type `lein run`, then:
 ## TODO
 
 - resume streaming on failure
-- support getting new tweets tweeted before and during bootstrap of the report
+- support getting new tweets tweeted before and during bootstrap into the first report
+- fix paging algorithm (use max_id instead)
 - move ipsum-lorem rand statuses gen to it's own module
 
 ## Development

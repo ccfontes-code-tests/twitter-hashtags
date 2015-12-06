@@ -1,7 +1,6 @@
 (ns twitter-hashtags.test.core
-  (:use midje.sweet twitter-hashtags.core)
-  (:require [twitter-hashtags.text :refer [big-lorem-tweet hashtagify-tweet]]
-  	        [twitter-hashtags.test.fixtures :refer [response-tweet response-friends]]
+  (:use midje.sweet twitter-hashtags.core twitter-hashtags.text)
+  (:require [twitter-hashtags.test.fixtures :refer [response-tweet response-friends]]
             [twitter-hashtags.test.util :refer [pos-int?]]))
 
 (fact "about twitter status update"
@@ -26,5 +25,15 @@
 (fact "about 'tweets-count-for-page'"
   (tweets-count-for-page 0) => (every-pred pos-int? #(<= % tweets-by-page)))
 
-(fact "about 'user-tl-page-hashtags'"
-  (user-tl-page-hashtags 0) => (every-pred seq (comp string? first)))
+(fact "about 'distil-tweets'"
+  (let [repeated-tweet "#sermo netus"
+        original-tweet "#netus gravida"
+        hash-repeated-tweets #{(hash repeated-tweet)}]
+  (distil-tweets [original-tweet repeated-tweet] hash-repeated-tweets)
+    => [(tweet->hashtags original-tweet)
+        (conj hash-repeated-tweets (hash original-tweet))]))
+
+(facts "about 'user-tl-page-hashtags'"
+  (let [[report streamed-tweet-hashes] (user-tl-page-hashtags 0 #{})]
+    report                => (every-pred seq (comp string? first))
+    streamed-tweet-hashes => (comp integer? first)))

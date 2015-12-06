@@ -76,34 +76,41 @@
       rest-tweets-cnt
       tweets-by-page)))
 
+(defn distil-tweets
+  "Transforms tweets into sequences of hashtags."
+  [tweets streamed-tweet-hashes]
+  (reduce
+    (fn [[hashtags streamed-tweet-hashes :as acc] tweet]
+      (let [tweet-hash (hash tweet)]
+       (if (streamed-tweet-hashes tweet-hash)
+         acc
+         [(concat hashtags (tweet->hashtags tweet))
+          (conj streamed-tweet-hashes tweet-hash)])))
+    [[] streamed-tweet-hashes]
+    tweets))
+
 (defn user-tl-page-hashtags
   "Bootstrap the report for hashtag usages from a page of the user timeline."
-  [page]
+  [page streamed-tweets-chan]
   (let [statuses (:body (statuses-user-timeline
                           :oauth-creds my-twitter-creds
                           :params {:count (tweets-count-for-page page)
-                                   :page page}))]
-    (first
-      (reduce
-        (fn [[hashtags streamed-tweet-hashes :as acc] status]
-          (let [tweet (:text status)
-                tweet-hash (hash tweet)]
-            (if (streamed-tweet-hashes tweet-hash)
-              acc
-              [(concat hashtags (tweet->hashtags tweet))
-               (conj streamed-tweet-hashes tweet-hash)])))
-        [[] #{}]
-        statuses))))
+                                   :page page}))
+        tweets (map :text statuses)]
+    (distil-tweets tweets streamed-tweets-chan)))
 
 (defn bootstrap-report
   "Bootstrap the report for hashtag usages from the user timeline."
-  [] (reduce  #(update-report %1 (user-tl-page-hashtags %2))
-              {}
-              (range (max-user-tl-tweet-pages))))
+  []
+  (reduce (fn [[report streamed-tweets-chan] page]
+            (let [[hashtags hashes] (user-tl-page-hashtags page streamed-tweets-chan)]
+              [(update-report report hashtags) hashes]))
+          [{} #{}]
+          (range (max-user-tl-tweet-pages))))
 
-(defn user-stream-callback
+(defn user-stream-callback ; dynamic var didn't make any sense here after all
   "Returns a callback that will channel its data back to caller."
-  [ch] ; dynamic var didn't make any sense here after all
+  [ch]
   (AsyncStreamingCallback. #(>!! ch (str %2))
                            #(error %)
                            #(fatal %)))
@@ -116,16 +123,18 @@
     (info "Bootstrapping report..")
 
     (let [ch (chan)
+          streamed-tweets-chan (chan)
           ; asynchronously starts to get tweets that be tweeted
           ; before or ater the report is bootstrapped.
           ; only starts showing them on screen after the report is bootstrapped
           response (user-stream :oauth-creds my-twitter-creds
                                 :callbacks (user-stream-callback ch))
-          bootstrapped-report (bootstrap-report)]
+          [bootstrapped-report streamed-tweet-hashes] (bootstrap-report)]
+      (println "streamed-tweet-hashes" streamed-tweet-hashes)
       (info "Report bootstrapped.")
       (-> bootstrapped-report decorate-report println)
       (info "Starting to report hashtag usage updates from user timeline in real time..\n")
-      (loop [report bootstrapped-report] ; prevents app from exiting
+      (loop [report bootstrapped-report]
         (recur
           (or (let [input (<!! ch)]
                 (if (tweet? input)
