@@ -129,19 +129,22 @@
           ; only starts showing them on screen after the report is bootstrapped
           response (user-stream :oauth-creds my-twitter-creds
                                 :callbacks (user-stream-callback ch))
-          [bootstrapped-report streamed-tweet-hashes] (bootstrap-report)]
-      (println "streamed-tweet-hashes" streamed-tweet-hashes)
+          [bootstrapped-report bt-streamed-tweet-hashes] (bootstrap-report)]
       (info "Report bootstrapped.")
       (-> bootstrapped-report decorate-report println)
       (info "Starting to report hashtag usage updates from user timeline in real time..\n")
-      (loop [report bootstrapped-report]
+      
+      (loop [[report streamed-tweet-hashes :as same] [bootstrapped-report bt-streamed-tweet-hashes]]
         (recur
-          (or (let [input (<!! ch)]
-                (if (tweet? input)
-                  (when-let [hashtags (-> input tweet-response->tweet-text tweet->hashtags)]
-                    (-> report decorate-report println)
-                    (->> hashtags (update-report report)))))
-              report))))
+          (or (let [response (<!! ch)]
+                (if (tweet? response)
+                  (let [tweet (tweet-response->tweet-text response)
+                        [hashtags hashes] (distil-tweets [tweet] streamed-tweet-hashes)
+                        stream-report (update-report report hashtags)]
+                    (if (seq hashtags)
+                      (-> stream-report decorate-report println))
+                    [stream-report hashes])))
+              same))))
 
     (catch Exception e
       (timbre/report (.getMessage e)))))
