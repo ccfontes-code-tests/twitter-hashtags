@@ -8,7 +8,7 @@
     [clj-time.local :refer [local-now format-local-time]]
     [environ.core :refer [env]]
     [clojure.string :as str]
-    [taoensso.timbre :as timbre :refer [info error fatal]]
+    [taoensso.timbre :as timbre :refer [info fatal]]
     [twitter.oauth :refer [make-oauth-creds]]
     [twitter-hashtags.logging :refer [config-timbre!]]
     [twitter-hashtags.text :refer [big-lorem-tweet hashtagify-tweet tweet->hashtags]])
@@ -97,8 +97,16 @@
   "Returns a callback that will channel its data back to caller."
   [ch]
   (AsyncStreamingCallback. #(>!! ch (str %2))
-                           #(error %)
-                           #(fatal %)))
+                           (constantly nil)
+                           (constantly nil)))
+
+(defn start-user-tl-stream [ch]
+  (user-stream :oauth-creds my-twitter-creds
+               :callbacks (user-stream-callback ch)))
+
+(defn restart-user-tl-stream [user-stream ch]
+  ((:cancel (meta user-stream)))
+  (start-user-tl-stream ch))
 
 (defn- report-from-stream
   "Updates report from real-time status updates,
@@ -117,24 +125,33 @@
               [stream-report hashes])))
         unchanged))))
 
+(defn report-hashtag-usage-realtime-msg [first-word]
+  (str first-word
+       " to report hashtag usage updates from user timeline in real time..\n"))
+
 (defn -main []
   (try
 
     (config-timbre!)
     (println)
     (info "Bootstrapping report..")
-
     (let [ch (chan)
           ; asynchronously starts to get tweets that can be tweeted
           ; before or ater the report is bootstrapped.
           ; only starts showing them on screen after the report is bootstrapped
-          response (user-stream :oauth-creds my-twitter-creds
-                                :callbacks (user-stream-callback ch))
+          user-stream-atom (atom (start-user-tl-stream ch))
           [bootstrapped-report _ :as bootstrap-res] (bootstrap-report)]
+
       (info "Report bootstrapped.")
       (-> bootstrapped-report decorate-report println)
-      (info "Starting to report hashtag usage updates from user timeline in real time..\n")
-      (report-from-stream ch bootstrap-res))
+
+      (info (report-hashtag-usage-realtime-msg "Starting"))
+      (try
+        (report-from-stream ch bootstrap-res)
+        (catch Exception e
+          (fatal (.getMessage e))
+          (info (report-hashtag-usage-realtime-msg "Restarting"))
+          (reset! user-stream-atom (restart-user-tl-stream @user-stream-atom ch)))))
 
     (catch Exception e
       (timbre/report (.getMessage e)))))

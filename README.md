@@ -35,10 +35,6 @@ Type `lein run`, then:
 
     lein repl
 
-## TODO
-
-- resume streaming on failure
-
 ## Development
 The command below will open a repl and continuously run the tests everytime
 a source or test file is saved.
