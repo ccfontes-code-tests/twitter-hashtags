@@ -21,12 +21,14 @@ using the keys and secrets of your app at [apps.twitter.com](https://apps.twitte
     lein run
 
 ## Generate bulk random status updates in user timeline
+Create timeline status updates while the report is bootstrapping.
 
 Type `lein run`, then:
 
 ```clojure
 (in-ns 'twitter-hashtags.core)
-(rand-status-updates 20) ; generates 20 statuses, or 10 if input is not provided
+(rand-status-update)     ; creates 1 status update
+(rand-status-updates 20) ; creates 20 statuses updates, or 1 if input is not provided
 ```
 
 ## Run the tests
@@ -36,9 +38,6 @@ Type `lein run`, then:
 ## TODO
 
 - resume streaming on failure
-- support getting new tweets tweeted before and during bootstrap into the first report
-- fix paging algorithm (use max_id instead)
-- move ipsum-lorem rand statuses gen to it's own module
 
 ## Development
 The command below will open a repl and continuously run the tests everytime
